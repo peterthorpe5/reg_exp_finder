@@ -10,8 +10,8 @@ $ python reg_ex_finder.py.py -h
 
 
 
-`Options:
-  -h, --help            show this help message and exit
-  -i INFASTA            this is the fasta file with your sequences
-  -r REG, --reg=REG     reg ex of interests
-  -o FILE, --output=FILEOutput filename`
+    Options:
+    -h, --help            show this help message and exit
+    -i INFASTA            this is the fasta file with your sequences
+    -r REG, --reg=REG     reg ex of interests
+    -o FILE, --output=FILEOutput filename
