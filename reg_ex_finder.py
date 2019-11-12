@@ -15,11 +15,33 @@ import logging.handlers
 import sys
 import re
 from optparse import OptionParser
+from collections import OrderedDict
 
 
-def find_reg(sequences, pattern):
+def parse_db_file(database):
+    """func to parse a tab sep database file.
+    return two dictionaries
+    db_name_to_exp, db_name_to_desc
+    """
+    db_name_to_exp = OrderedDict()
+    db_name_to_desc = OrderedDict()
+    f_open = open(database, "r")
+    for line in f_open:
+        if not line.strip():
+            continue  # if the last line is blank
+        if line.startswith("#"):
+            continue  # comment line
+        name, reg_exp, description = line.split()
+        db_name_to_exp[name] = reg_exp
+        db_name_to_desc[name] = description.rstrip()
+    return db_name_to_exp, db_name_to_desc
+
+
+def find_reg(sequences, database, pattern):
     """func to iterate through the fasta and search for the
     reg expressions"""
+    if database:
+        db_name_to_exp, db_name_to_desc = parse_db_file(database)
     for seq_record in SeqIO.parse(sequences, "fasta"):
         # https://pythonforbiologists.com/regular-expressions
         # https://docs.python.org/2/howto/regex.html
@@ -37,13 +59,24 @@ def find_reg(sequences, pattern):
                             str(seq_record.seq.upper()))
         findallmatches = re.findall(pattern,
                             str(seq_record.seq.upper()))
+        print("findallmatches", findallmatches)
         if search_matches:
-            print('Match found: ', m.group())
-            print(search_matches)
-            print(search_matches.group())
-            print(search_matches.start(), search_matches.end())
+            print('Match found: ', search_matches.group())
+            #print(search_matches)
+            #print(search_matches.group())
+            #print(search_matches.start(), search_matches.end())
         else:
             print('No match')
+        if database:
+            for name, exp in db_name_to_exp.items():
+                 search_matches = re.search(exp,
+                            str(seq_record.seq.upper()))
+                 if search_matches:
+                     print("Match found: ", name,  search_matches.group(),
+                           db_name_to_desc[name])
+                     data = "\t".join([name,  str(search_matches.group()),
+                                       db_name_to_desc[name]])
+                
 
         
 
@@ -67,6 +100,14 @@ parser.add_option("-r", "--reg",
                   dest="reg",
                   default=r"[A-Z](RK|R)R(R[A-Z])",
                   help="reg ex of interests")
+
+parser.add_option("-f", "--database",
+                  dest="database",
+                  default=False,
+                  help="a tab separated text file with " +
+                  " patterns of interets: " +
+                  "pattern_name\treg_expr\tdescription")
+
 parser.add_option("-o", "--output",
                   dest="out_file",
                   default="tes_reg.txt",
@@ -109,5 +150,5 @@ if __name__ == '__main__':
     logger.info("Command-line: %s", ' '.join(sys.argv))
     logger.info("Starting testing: %s", time.asctime())
     # index the genome with biopython
-    find_reg(infasta, reg)
+    find_reg(infasta, options.database, reg)
 
