@@ -36,6 +36,9 @@ def parse_db_file(database):
         db_name_to_desc[name] = description.rstrip()
     return db_name_to_exp, db_name_to_desc
 
+def count_motifs(seq, pattern):
+    chunks = re.split(pattern, seq)
+    return(len(chunks)-1)
 
 def find_reg(sequences, database, pattern):
     """func to iterate through the fasta and search for the
@@ -55,13 +58,23 @@ def find_reg(sequences, database, pattern):
         # A plus sign immediately following a character or group means that the character or group must be present but can be repeated any number of times 
         # An asterisk immediately following a character or group means that the character or group is optional, but can also be repeated. In other words,
         #N-Arg_dibasic_convertase    [A-Z][RK|R]R[R[A-Z]]
-        search_matches = re.search(pattern,
-                            str(seq_record.seq.upper()))
-        findallmatches = re.findall(pattern,
-                            str(seq_record.seq.upper()))
+        seq = str(seq_record.seq.upper())
+        search_matches = re.search(pattern, seq)
+        findallmatches = re.findall(pattern, seq)
+        all_matches = re.finditer(pattern, seq)
+        for postivies in all_matches:
+            base = postivies.group() 
+            pos  = postivies.start() 
+            print(base + " found at position " + str(pos))
+            
+        if findallmatches:
+            print(len(findallmatches))
+        num_of_motifs = count_motifs(seq, pattern)
+        print("we have %d number of motifs matches" % num_of_motifs)
         print("findallmatches", findallmatches)
+        
         if search_matches:
-            print('Match found: ', search_matches.group())
+            print('Match found: ', search_matches)
             #print(search_matches)
             #print(search_matches.group())
             #print(search_matches.start(), search_matches.end())
@@ -98,7 +111,7 @@ parser.add_option("-i",
                   help="this is the fasta file with your sequences")
 parser.add_option("-r", "--reg",
                   dest="reg",
-                  default=r"[A-Z](RK|R)R(R[A-Z])",
+                  default="[A-Z](RK|R)R(R[A-Z])",
                   help="reg ex of interests")
 
 parser.add_option("-f", "--database",
