@@ -50,9 +50,10 @@ def find_reg(sequences, pattern):
 
 usage = """Use as follows:
 
-$ python name_of_script.py -h
-python name_of_script.py -i in.fasta --reg expression -o outdata.txt
+$ python reg_ex_finder.py -h
+python reg_ex_finder.py.py -i in.fasta --reg expression -o outdata.txt
 
+requires: biopython
 """
 
 parser = OptionParser(usage=usage)
