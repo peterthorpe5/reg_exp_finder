@@ -42,12 +42,16 @@ def count_motifs(seq, pattern):
     return(len(chunks)-1)
 
 
-def find_reg(sequences, database, pattern):
+def find_reg(sequences, database, out, pattern, logger):
     """func to iterate through the fasta and search for the
     reg expressions"""
+    f_out = open(out, "w")
+    motifs = out + "_motifs_only"
+    motifs_out = open(motifs, "w")
     if database:
         db_name_to_exp, db_name_to_desc = parse_db_file(database)
     for seq_record in SeqIO.parse(sequences, "fasta"):
+        #print(seq_record.id)
         # https://pythonforbiologists.com/regular-expressions
         # https://docs.python.org/2/howto/regex.html
         # eg GG(A|T)CC
@@ -67,7 +71,12 @@ def find_reg(sequences, database, pattern):
         for postivies in all_matches:
             base = postivies.group() 
             pos  = postivies.start() 
-            print(base + " found at position " + str(pos) + "-", postivies.end() )
+            info = (base + " found at position " + str(pos) + "-", postivies.end() )
+            logger.info(info)
+            print(info)
+            SeqIO.write(seq_record, f_out, "fasta")
+            seq_record.seq = seq_record.seq[int(pos): int(postivies.end())]
+            SeqIO.write(seq_record, motifs_out, "fasta")
             
         if findallmatches:
             print(len(findallmatches))
@@ -80,6 +89,7 @@ def find_reg(sequences, database, pattern):
             #print(search_matches)
             #print(search_matches.group())
             #print(search_matches.start(), search_matches.end())
+
         else:
             print('No match')
         if database:
@@ -109,11 +119,11 @@ parser = OptionParser(usage=usage)
 parser.add_option("-i",
                   dest="infasta",
                   default=os.path.join("test_data",
-                                       "seq_of_interest.fasta"),
+                                       "phy_crnker.fasta"),
                   help="this is the fasta file with your sequences")
 parser.add_option("-r", "--reg",
                   dest="reg",
-                  default="[A-Z](RK|R)R(R[A-Z])",
+                  default="^.{30,70}L[FY]LA[RK]",
                   help="reg ex of interests")
 
 parser.add_option("-f", "--database",
@@ -125,7 +135,7 @@ parser.add_option("-f", "--database",
 
 parser.add_option("-o", "--output",
                   dest="out_file",
-                  default="tes_reg.txt",
+                  default="matches.fasta",
                   help="Output filename ",
                   metavar="FILE")
 
@@ -133,7 +143,7 @@ parser.add_option("-o", "--output",
 (options, args) = parser.parse_args()
 infasta = options.infasta
 reg = options.reg
-outfile = open(options.out_file, "w")
+outfile = options.out_file
 logfile = "reg_ex_WARNINGS.log"
 # Run as script
 if __name__ == '__main__':
@@ -165,5 +175,5 @@ if __name__ == '__main__':
     logger.info("Command-line: %s", ' '.join(sys.argv))
     logger.info("Starting testing: %s", time.asctime())
     # index the genome with biopython
-    find_reg(infasta, options.database, reg)
+    find_reg(infasta, options.database, outfile, reg, logger)
 
